@@ -10,14 +10,20 @@ class App extends Component {
     this.state = {
       lat: 36,
       lg: -79,
-      ht: 10,
-      width: 20,
+      ht: 0.75,
+      width: 1.5,
       loading: true,
       data: [],
+      zoom: 10,
     };
+    this.getData = this.getData.bind(this);
   }
+
   componentDidMount() {
-    console.log('mounted');
+    this.getData();
+  }
+
+  getData() {
     const { lat, lg, ht, width } = this.state;
     fetch(`https://geodata-python-api.herokuapp.com/?lat=${lat}&lg=${lg}&ht=${ht}&width=${width}`)
       .then(res => res.json())
@@ -29,19 +35,16 @@ class App extends Component {
   }
 
   render() {
-    const position = [this.state.lat, this.state.lg];
-    const zoom = 10;
-    if (this.state.loading) {
-      return <p>Loading...</p>;
-    }
+    const { lat, lg, loading, data, zoom } = this.state;
     return (
       <>
-      <p>There are {this.state.data.length} IP addresses in this region.</p>
-      <Map center={position} zoom={zoom}>
+      <p>{loading ? 
+        'Loading IP map...' :
+        `There are ${data.length} IP addresses in this region.`
+      }</p>
+      <Map center={[lat, lg]} zoom={zoom}>
         <HeatmapLayer
-          fitBoundsOnLoad
-          fitBoundsOnUpdate
-          points={this.state.data}
+          points={data}
           latitudeExtractor={m => m[0]}
           longitudeExtractor={m => m[1]}
           intensityExtractor={m => parseFloat(m[2])} 
