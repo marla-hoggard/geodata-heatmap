@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import { Map, TileLayer } from 'react-leaflet';
 import HeatmapLayer from 'react-leaflet-heatmap-layer';
 
@@ -17,14 +17,15 @@ class App extends Component {
       zoom: 10,
     };
     this.getData = this.getData.bind(this);
+    this.handleMoveZoom = this.handleMoveZoom.bind(this);
   }
 
   componentDidMount() {
-    this.getData();
+    const { lat, lg, ht, width } = this.state;
+    this.getData(lat, lg, ht, width);
   }
 
-  getData() {
-    const { lat, lg, ht, width } = this.state;
+  getData(lat, lg, ht, width) {
     fetch(`https://geodata-python-api.herokuapp.com/?lat=${lat}&lg=${lg}&ht=${ht}&width=${width}`)
       .then(res => res.json())
       .then(data => {
@@ -32,6 +33,22 @@ class App extends Component {
         this.setState({ data: coords, loading: false });
       })
       .catch(err => console.error(err));
+  }
+
+  handleMoveZoom(e) {
+    const zoomLevel = e.target._zoom;
+    const [lat, lg] = e.target.options.center;
+    const ht = 180 / (2 ** zoomLevel);
+    const width = ht * 2;
+    this.setState({
+      lat,
+      lg,
+      ht,
+      width,
+      zoom: zoomLevel,
+      loading: true,
+    });
+    this.getData(lat, lg, ht, width);
   }
 
   render() {
@@ -42,7 +59,11 @@ class App extends Component {
         'Loading IP map...' :
         `There are ${data.length} IP addresses in this region.`
       }</p>
-      <Map center={[lat, lg]} zoom={zoom}>
+      <Map
+        center={[lat, lg]} 
+        zoom={zoom}
+        onMovestart={this.handleMoveZoom}
+      >
         <HeatmapLayer
           points={data}
           latitudeExtractor={m => m[0]}
