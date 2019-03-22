@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { Map, TileLayer, Marker, Popup } from 'react-leaflet';
+import { Map, TileLayer } from 'react-leaflet';
+import HeatmapLayer from 'react-leaflet-heatmap-layer';
 
 import './App.css';
 
@@ -21,30 +22,33 @@ class App extends Component {
     fetch(`https://geodata-python-api.herokuapp.com/?lat=${lat}&lg=${lg}&ht=${ht}&width=${width}`)
       .then(res => res.json())
       .then(data => {
-        console.log(data);
-        this.setState({ data: [...data], loading: false });
+        const coords = data.map(point => [point.latitude, point.longitude, point.network]);
+        this.setState({ data: coords, loading: false });
       })
       .catch(err => console.error(err));
   }
 
   render() {
-    const position = [36, 42];
-    const zoom = 7;
+    const position = [this.state.lat, this.state.lg];
+    const zoom = 10;
     if (this.state.loading) {
       return <p>Loading...</p>;
     }
     return (
       <>
-      <p>{this.state.data.length}</p>
+      <p>There are {this.state.data.length} IP addresses in this region.</p>
       <Map center={position} zoom={zoom}>
-        <TileLayer
-          url={`https://tile.openstreetmap.org/${zoom}/${position[0]}/${position[1]}.png`}
+        <HeatmapLayer
+          fitBoundsOnLoad
+          fitBoundsOnUpdate
+          points={this.state.data}
+          latitudeExtractor={m => m[0]}
+          longitudeExtractor={m => m[1]}
+          intensityExtractor={m => parseFloat(m[2])} 
         />
-        <Marker position={position}>
-          <Popup>
-            A pretty CSS3 popup. <br /> Easily customizable.
-          </Popup>
-        </Marker>
+        <TileLayer
+          url={`http://{s}.tile.osm.org/{z}/{x}/{y}.png`}
+        />
       </Map>
       </>
     )
