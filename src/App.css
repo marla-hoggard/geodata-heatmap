@@ -1,5 +1,27 @@
+body {
+  background-image: url("images/blue-paint-bg.jpg");
+  text-align: center;
+}
+
+h1 {
+  font-family: "Oswald";
+  font-size: 2.5em;
+  margin-bottom: 0;
+}
+
+h3 {
+  font-family: "Oswald";
+  font-weight: 300;
+  margin: 10px 0;
+}
+
 .leaflet-container { 
   height: 500px; 
   max-width: 1000px;
   margin: auto;
+  border: 1px solid black;
+}
+
+.status-message {
+  font-family: "Lato";
 }

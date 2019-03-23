@@ -87,7 +87,7 @@ class App extends Component {
     } else if (loading) {
       return 'Loading heatmap...'
     } else {
-      return `There are ${data.length.toLocaleString()} IP addresses in this region.`
+      return `There are ${data.length.toLocaleString()} IP addresses in this region`
     }
   }
 
@@ -95,24 +95,26 @@ class App extends Component {
     const { lat, lg, data, zoom } = this.state;
     return (
       <>
-      <p>{this.messageText}</p>
-      <Map
-        center={[lat, lg]} 
-        zoom={zoom}
-        ref={this.mapRef}
-        onMovestart={this.handleMoveZoom}
-      >
-        <HeatmapLayer
-          points={data}
-          latitudeExtractor={m => m[0]}
-          longitudeExtractor={m => m[1]}
-          intensityExtractor={m => parseFloat(m[2])} 
-        />
-        <TileLayer
-          url={`http://{s}.tile.osm.org/{z}/{x}/{y}.png`}
-          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        />
-      </Map>
+        <h1>Get Connected</h1>
+        <h3>A heatmap of IPv4 networks around the world</h3>
+        <Map
+          center={[lat, lg]} 
+          zoom={zoom}
+          ref={this.mapRef}
+          onMovestart={this.handleMoveZoom}
+        >
+          <HeatmapLayer
+            points={data}
+            latitudeExtractor={m => m[0]}
+            longitudeExtractor={m => m[1]}
+            intensityExtractor={m => parseFloat(m[2])} 
+          />
+          <TileLayer
+            url={`http://{s}.tile.osm.org/{z}/{x}/{y}.png`}
+            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+          />
+        </Map>
+        <p className="status-message">{this.messageText}</p>
       </>
     )
   }
