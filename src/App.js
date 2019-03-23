@@ -16,12 +16,14 @@ class App extends Component {
       data: [],
       loading: true,
       shouldFetch: false,
+      error: null,
     };
     this.getData = this.getData.bind(this);
     this.handleMoveZoom = this.handleMoveZoom.bind(this);
   }
 
   mapRef = createRef();
+  controller = new window.AbortController();
 
   componentDidMount() {
     this.getData();
@@ -36,13 +38,22 @@ class App extends Component {
 
   getData() {
     const { lat, lg, ht, width } = this.state;
-    fetch(`https://geodata-python-api.herokuapp.com/?lat=${lat}&lg=${lg}&ht=${ht}&width=${width}`)
-      .then(res => res.json())
+    this.controller = new window.AbortController();
+    fetch(
+      `https://geodata-python-api.herokuapp.com/?lat=${lat}&lg=${lg}&ht=${ht}&width=${width}`,
+      { signal: this.controller.signal },
+    ).then(res => res.json())
       .then(data => {
         const coords = data.map(point => [point.latitude, point.longitude, point.network]);
         this.setState({ data: coords, loading: false });
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        if (err.name === 'AbortError') {
+          return;
+        }
+        console.error(err);
+        this.setState({ error: 'Something went wrong. Try moving the map or refreshing the page.'})
+      });
   }
 
   handleMoveZoom() {
@@ -54,6 +65,9 @@ class App extends Component {
     const lg = center.lng;
     const ht = Math.abs(bounds._northEast.lat - bounds._southWest.lat) * 2;
     const width = Math.abs(bounds._northEast.lng - bounds._southWest.lng) * 2;
+    if (this.state.loading) {
+      this.controller.abort();
+    }
     this.setState({
       lat,
       lg,
@@ -62,19 +76,26 @@ class App extends Component {
       zoom,
       shouldFetch: true,
       loading: true,
+      error: null,
     });
   }
 
+  get messageText() {
+    const { data, error, loading } = this.state;
+    if (error) {
+      return error;
+    } else if (loading) {
+      return 'Loading heatmap...'
+    } else {
+      return `There are ${data.length.toLocaleString()} IP addresses in this region.`
+    }
+  }
+
   render() {
-    const { lat, lg, loading, data, zoom } = this.state;
+    const { lat, lg, data, zoom } = this.state;
     return (
       <>
-      <p>
-        {loading ? 
-          'Loading IP map...' :
-          `There are ${data.length} IP addresses in this region.`
-        }
-      </p>
+      <p>{this.messageText}</p>
       <Map
         center={[lat, lg]} 
         zoom={zoom}
